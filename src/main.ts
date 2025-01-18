@@ -1,7 +1,6 @@
 import * as ex from "excalibur";
 import Gun from "gun";
 import "gun/sea";
-import "gun/lib/unset";
 
 import { Player } from "./player";
 
@@ -64,12 +63,12 @@ function handleLoginSubmit(event: SubmitEvent) {
     }
 }
 
-gun.get("users").map().once((user, id) => {
-    console.log(user, id);
-});
+// gun.get("users").map().once((user, id) => {
+//     console.log(user, id);
+// });
 
+// When a user logs in, create a player random screen coords.
 gun.on("auth", (a) => {
-    console.log(a);
     user.get("alias").once((alias) => {
         db.get("players").get(alias).put({ name: alias, x: rng.integer(0, 600), y: rng.integer(0, 400) });
     });
@@ -91,11 +90,13 @@ const rng = new ex.Random();
 
 const players: { [key: string]: Player; } = {};
 
-
+// Listen to updates to players.
 db.get("players").map().on((playerData, key) => {
     if (players[key]) {
+        // Update the player entity position.
         players[key].actions.moveTo(playerData.x, playerData.y, 500);
     } else {
+        // Create a new player entity.
         const player = new Player(playerData.name, playerData.x, playerData.y);
         game.add(player);
         players[key] = player;
@@ -103,6 +104,7 @@ db.get("players").map().on((playerData, key) => {
 });
 
 
+// When user clicks, move their player.
 game.input.pointers.primary.on("down", (event: ex.PointerEvent) => {
     if (user.is) {
         user.get("alias").once((alias) => {
