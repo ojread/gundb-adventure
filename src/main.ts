@@ -10,12 +10,9 @@ const namespace = "bniubiubiub";
 
 const gun = Gun([/*"http://localhost:8766/gun", */"https://gun-manhattan.herokuapp.com/gun"]);
 const user = gun.user();
-const db = gun.get(namespace);
-
-const username = "alan";
-const password = "12345678";
-
-// user.create(username, password, (ack) => { console.log(ack); });
+// const db = gun.get(namespace);
+// const username = "alan";
+// const password = "12345678";
 
 const RegisterForm = document.getElementById("register");
 RegisterForm?.addEventListener("submit", handleRegisterSubmit);
@@ -63,16 +60,32 @@ function handleLoginSubmit(event: SubmitEvent) {
     }
 }
 
-// gun.get("users").map().once((user, id) => {
-//     console.log(user, id);
-// });
-
 // When a user logs in, create a player random screen coords.
 gun.on("auth", (a) => {
     user.get("alias").once((alias) => {
-        db.get("players").get(alias).put({ name: alias, x: rng.integer(0, 600), y: rng.integer(0, 400) });
+        //     db.get("players").get(alias).put({ name: alias, x: rng.integer(0, 600), y: rng.integer(0, 400) });
+        const player = user.get("player");
+        player.put({ name: alias, x: rng.integer(0, 600), y: rng.integer(0, 400) });
+        gun.get("players").set(player);
+
+        // user.get("test").put("this is a test");
+        // user.get("test").on(console.log);
     });
 });
+
+// Listen for new players joining
+// gun.on("hi", (a) => {
+// });
+
+// Listen for users leaving
+// gun.on("bye", (a) => {
+// });
+
+
+// user.on((player, a) => {
+//     console.log(player);
+// });
+// console.log(user);
 
 
 const game = new ex.Engine({
@@ -90,25 +103,26 @@ const rng = new ex.Random();
 
 const players: { [key: string]: Player; } = {};
 
-// Listen to updates to players.
-db.get("players").map().on((playerData, key) => {
-    if (players[key]) {
+// Get players and render them.
+gun.get("players").map().on((playerData, key) => {
+    console.log(playerData, key);
+
+    if (players[playerData.name]) {
         // Update the player entity position.
-        players[key].actions.moveTo(playerData.x, playerData.y, 500);
+        players[playerData.name].actions.moveTo(playerData.x, playerData.y, 500);
     } else {
         // Create a new player entity.
         const player = new Player(playerData.name, playerData.x, playerData.y);
         game.add(player);
-        players[key] = player;
+        players[playerData.name] = player;
     }
 });
-
 
 // When user clicks, move their player.
 game.input.pointers.primary.on("down", (event: ex.PointerEvent) => {
     if (user.is) {
-        user.get("alias").once((alias) => {
-            db.get("players").get(alias).put({ x: event.worldPos.x, y: event.worldPos.y });
-        });
+        const player = user.get("player");
+        player.get("x").put(event.worldPos.x);
+        player.get("y").put(event.worldPos.y);
     }
 });
